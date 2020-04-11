@@ -3,6 +3,7 @@ from pprint import pprint
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Days of reports to collect
 days = [
     "03-09-2020",
     "03-10-2020",
@@ -41,7 +42,8 @@ days = [
 data_url_template = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/" \
                     "csse_covid_19_data/" \
                     "csse_covid_19_daily_reports/"
-
+# This dictionary is used to consolidate the data
+# where the labels aren't consistent
 names_dict = {
     'Mainland China': 'China',
     'China': 'China',
@@ -50,6 +52,7 @@ names_dict = {
     'Korea, South': 'South Korea',
     'Republic of Korea': 'South Korea',
     'Italy': 'Italy',
+    'Yemen': 'Yemen',
     'Iran': 'Iran',
     'Iran (Islamic Republic of)': 'Iran',
     'France': 'France',
@@ -196,7 +199,9 @@ names_dict = {
     'Kenya': 'Kenya',
     'Uruguay': 'Uruguay',
     'Ghana': 'Ghana',
-    'Jersey': 'Jersey',
+    'Jersey': 'Channel Islands',
+    'Channel Islands': 'Channel Islands',
+    'Guernsey': 'Channel Islands',
     'Namibia': 'Namibia',
     'Seychelles': 'Seychelles',
     'Trinidad and Tobago': 'Trinidad and Tobago',
@@ -205,7 +210,6 @@ names_dict = {
     'Eswatini': 'Eswatini',
     'Gabon': 'Gabon',
     'Guatemala': 'Guatemala',
-    'Guernsey': 'Guernsey',
     'Mauritania': 'Mauritania',
     'Rwanda': 'Rwanda',
     'Saint Lucia': 'Saint Lucia',
@@ -248,7 +252,8 @@ names_dict = {
     'Niger': 'Niger',
     'Papua New Guinea': 'Papua New Guinea',
     'Zimbabwe': 'Zimbabwe',
-    'East Timor': 'East Timor',
+    'East Timor': 'Timor-Leste',
+    'Timor-Leste': 'Timor-Leste',
     'Eritrea': 'Eritrea',
     'Uganda': 'Uganda',
     'Dominica': 'Dominica',
@@ -270,22 +275,41 @@ names_dict = {
     'Sao Tome and Principe': 'Sao Tome and Principe'
 }
 
+# initialize the dictionary to hold the data
+# will have the countries as keys
+# the values will be a list of dictionaries
+# each element is a day of data for that country
 data_dict = {}
 
+# Loop through the days
 for count, day in enumerate(days):
+    # Get this day's data
     data = pd.read_csv(data_url_template + day + ".csv", error_bad_lines=False)
+
     print("Day:", day.split(".")[0])
+
+    # Loop through the rows
     for index, item in data.iterrows():
+        # Check if there is no data in this row
         if data["Confirmed"][index] == 0 and data["Deaths"][index] == 0 and data["Recovered"][index] == 0:
             continue
+
+        # Check what the labeling style is
         if "Country/Region" in data.columns:
+            # Check if this country in in the names dict
             if data["Country/Region"][index] in names_dict.keys():
+                # If it is, check if it's in the data dict already
                 if names_dict[data["Country/Region"][index]] in data_dict.keys():
+                    # If it is, check if we're moved on to the next day yet
                     if len(data_dict[names_dict[data["Country/Region"][index]]]) == count + 1:
-                        data_dict[names_dict[data["Country/Region"][index]]][count]["Confirmed"] += data["Confirmed"][index]
+                        # if we're still on the same day, add the current results to the day
+                        data_dict[names_dict[data["Country/Region"][index]]][count]["Confirmed"] += data["Confirmed"][
+                            index]
                         data_dict[names_dict[data["Country/Region"][index]]][count]["Deaths"] += data["Deaths"][index]
-                        data_dict[names_dict[data["Country/Region"][index]]][count]["Recovered"] += data["Recovered"][index]
+                        data_dict[names_dict[data["Country/Region"][index]]][count]["Recovered"] += data["Recovered"][
+                            index]
                     else:
+                        # If we've moved on, add a new day to the countries list
                         data_dict[names_dict[data["Country/Region"][index]]].append({
                             "Confirmed": data["Confirmed"][index],
                             "Deaths": data["Deaths"][index],
@@ -293,6 +317,7 @@ for count, day in enumerate(days):
                             "Day": day
                         })
                 else:
+                    # If it isn't add this country to the data dict
                     data_dict.setdefault(names_dict[data["Country/Region"][index]], [{
                         "Confirmed": data["Confirmed"][index],
                         "Deaths": data["Deaths"][index],
@@ -300,13 +325,20 @@ for count, day in enumerate(days):
                         "Day": day
                     }])
         else:
+            # Check if this country in in the names dict
             if data["Country_Region"][index] in names_dict.keys():
+                # If it is, check if it's in the data dict already
                 if names_dict[data["Country_Region"][index]] in data_dict.keys():
+                    # If it is, check if we're moved on to the next day yet
                     if len(data_dict[names_dict[data["Country_Region"][index]]]) == count + 1:
-                        data_dict[names_dict[data["Country_Region"][index]]][count]["Confirmed"] += data["Confirmed"][index]
+                        # if we're still on the same day, add the current results to the day
+                        data_dict[names_dict[data["Country_Region"][index]]][count]["Confirmed"] += data["Confirmed"][
+                            index]
                         data_dict[names_dict[data["Country_Region"][index]]][count]["Deaths"] += data["Deaths"][index]
-                        data_dict[names_dict[data["Country_Region"][index]]][count]["Recovered"] += data["Recovered"][index]
+                        data_dict[names_dict[data["Country_Region"][index]]][count]["Recovered"] += data["Recovered"][
+                            index]
                     else:
+                        # If we've moved on, add a new day to the countries list
                         data_dict[names_dict[data["Country_Region"][index]]].append({
                             "Confirmed": data["Confirmed"][index],
                             "Deaths": data["Deaths"][index],
@@ -314,6 +346,7 @@ for count, day in enumerate(days):
                             "Day": day
                         })
                 else:
+                    # If it isn't add this country to the data dict
                     data_dict.setdefault(names_dict[data["Country_Region"][index]], [{
                         "Confirmed": data["Confirmed"][index],
                         "Deaths": data["Deaths"][index],
@@ -321,28 +354,126 @@ for count, day in enumerate(days):
                         "Day": day
                     }])
 
+# Time to make the graphs!
+
+# Polar stacked bar graphs for Google Maps Marker
+# Loop through the countries
 for country in data_dict:
     print("Country:", country)
-    ax = plt.subplot(projection='polar')
-    plt.axis('off')
 
+    # set up plot
+    ax = plt.subplot(projection='polar')
+
+    # the positions and widths are proportional
     theta = ((np.pi * 2) / len(data_dict[country]))
     width = ((np.pi * 2) / len(data_dict[country]))
+
+    # loop through all the days for this country
     for index, day in enumerate(data_dict[country]):
         # Colors from
         # https://www.colourlovers.com/palette/56122/Sweet_Lolly
 
-        # Confirmed
+        # Active
+        # Active is the total confirmed cases minus the deaths and the recovered
         ax.bar((np.pi / 2) + (theta * index), day["Confirmed"] - day["Deaths"] - day["Recovered"], width=width,
                color='#FABE28', bottom=0.0, alpha=1)
+
         # Deaths
+        # Deaths start on top of the actives
         ax.bar((np.pi / 2) + (theta * index), day["Deaths"], width=width, color='#FF003C',
                bottom=day["Confirmed"] - day["Deaths"] - day["Recovered"], alpha=1)
+
         # Recovered
+        # Recovered starts on top of the deaths
         ax.bar((np.pi / 2) + (theta * index), day["Recovered"], width=width, color='#88C100',
                bottom=day["Confirmed"] - day["Recovered"], alpha=1)
 
-    plt.savefig(
-        r"C:\Users\killa\Documents\GitHub\killascheuring.github.io\images\polar_graphs\%s_plot.svg" % country.lower().replace(
-            " ", "_"), transparent=True)
+    # After going through the days
+    # Save the file to the git hub portfolio
+    # plt.savefig(
+    #     r"C:\Users\killa\Documents\GitHub\killascheuring.github.io\images\polar_graphs\%s_plot.svg" % country.lower().replace(
+    #         " ", "_"), transparent=True)
+    plt.show()
+    # Since these will be used as google maps markers
+    # The axes are removed
+    plt.axis('off')
+
+    plt.show()
+    # Clear the plot for the next country
     ax.remove()
+    break
+
+# Cartesian stacked bar graph for Google Maps Info Windows
+# loop through all the countries
+for country in data_dict:
+    print("Country:", country)
+    ax = plt.subplot(111)
+
+    # distance between the bars is consistent
+    theta = 1
+    width = 0.30
+
+    # Empty list for the dates as labels
+    labels = []
+    # loop though the days
+    for index, day in enumerate(data_dict[country]):
+        # Colors from
+        # https://www.colourlovers.com/palette/56122/Sweet_Lolly
+
+        # Check if it's the last day
+        if index < len(data_dict[country]) - 1:
+            # If not don't add labels to the colors
+
+            # Confirmed
+            # Active is the total confirmed cases minus the deaths and the recovered
+            ax.bar((theta * index), day["Confirmed"] - day["Deaths"] - day["Recovered"], width=width,
+                   color='#FABE28', bottom=0.0, alpha=1)
+            # Deaths
+            # Deaths start on top of the actives
+            ax.bar((theta * index), day["Deaths"], width=width, color='#FF003C',
+                   bottom=day["Confirmed"] - day["Deaths"] - day["Recovered"], alpha=1)
+            # Recovered
+            # Recovered starts on top of the deaths
+            ax.bar((theta * index), day["Recovered"], width=width, color='#88C100',
+                   bottom=day["Confirmed"] - day["Recovered"], alpha=1)
+
+            # Add this date to the label
+            labels.append(day["Day"].split("-")[0] + "-" + day["Day"].split("-")[1])
+        else:
+            # If it is the last day add the labels to each color
+
+            # Confirmed
+            # Active is the total confirmed cases minus the deaths and the recovered
+            ax.bar((theta * index), day["Confirmed"] - day["Deaths"] - day["Recovered"], width=width,
+                   color='#FABE28', bottom=0.0, alpha=1, label='Active')
+            # Deaths
+            # Deaths start on top of the actives
+            ax.bar((theta * index), day["Deaths"], width=width, color='#FF003C',
+                   bottom=day["Confirmed"] - day["Deaths"] - day["Recovered"], alpha=1, label='Deaths')
+            # Recovered
+            # Recovered starts on top of the deaths
+            ax.bar((theta * index), day["Recovered"], width=width, color='#88C100',
+                   bottom=day["Confirmed"] - day["Recovered"], alpha=1, label='Recovered')
+
+            # Add this date to the label
+            labels.append(day["Day"].split("-")[0] + "-" + day["Day"].split("-")[1])
+
+    # Style the plot
+    plt.xticks(fontsize=8)
+    plt.xlabel("Days")
+    plt.ylabel("Number of Cases")
+    ax.set_xticks(np.arange(len(data_dict[country])))
+    ax.set_xticklabels(labels, rotation=45)
+    ax.set_title(country)
+    ax.legend(loc=1)
+
+    # After going through the days
+    # Save the file to the git hub portfolio
+    # plt.savefig(
+    #     r"C:\Users\killa\Documents\GitHub\killascheuring.github.io\images\bar_graphs\%s_plot.png" % country.lower().replace(
+    #         " ", "_"), transparent=True)
+    plt.show()
+
+    # Clear the plot for the next country
+    ax.remove()
+    break

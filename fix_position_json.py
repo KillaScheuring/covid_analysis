@@ -3,8 +3,6 @@ from pprint import pprint
 
 
 days = [
-    "03-07-2020.csv",
-    "03-08-2020.csv",
     "03-09-2020.csv",
     "03-10-2020.csv",
     "03-11-2020.csv",
@@ -35,6 +33,8 @@ days = [
     "04-05-2020.csv",
     "04-06-2020.csv",
     "04-07-2020.csv",
+    "04-08-2020.csv",
+    "04-09-2020.csv",
 ]
 
 data_url_template = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/" \
@@ -65,13 +65,11 @@ for index, country in lat_lon_data_frame.iterrows():
         lat_lng_dict.setdefault("US", {
             "lat": lat_lon_data_frame["Latitude"][index],
             "lon": lat_lon_data_frame["Longitude"][index],
-            "url": "../images/svgs/us_plot.svg"
         })
     else:
         lat_lng_dict.setdefault(lat_lon_data_frame["Country"][index], {
             "lat": lat_lon_data_frame["Latitude"][index],
             "lon": lat_lon_data_frame["Longitude"][index],
-            "url": "../images/svgs/%s_plot.svg" % lat_lon_data_frame["Country"][index].lower().replace(" ", "_")
         })
 
 other_names_dict = {}
@@ -103,11 +101,8 @@ for country in countries:
             else:
                 other_names_dict.setdefault(country.split(",")[0], [country])
                 found_count += 1
-    elif country == "US":
-        other_names_dict.setdefault(country, ["United States"])
-    elif country == "UK":
-        other_names_dict.setdefault(country, ["United Kingdom"])
 
-print("Countries:", len(countries))
-print("Found names:", found_count)
-pprint(list(set(countries) & set(other_names_dict.keys())))
+print("Countries:", countries)
+# print("Found names:", found_count)
+# pprint(list(set(countries) & set(other_names_dict.keys())))
+pprint(lat_lng_dict)
