@@ -391,14 +391,21 @@ for country in data_dict:
     # After going through the days
     # Save the file to the git hub portfolio
     # plt.savefig(
-    #     r"C:\Users\killa\Documents\GitHub\killascheuring.github.io\images\polar_graphs\%s_plot.svg" % country.lower().replace(
+    #     r"C:\Users\killa\Documents\GitHub\killascheuring.github.io\images\polar_graphs\%s_marker.svg" % country.lower().replace(
     #         " ", "_"), transparent=True)
-    plt.show()
+
+    plt.savefig(
+        "plots/%s_plot_axis.svg" % country.lower().replace(
+            " ", "_"), transparent=True)
     # Since these will be used as google maps markers
     # The axes are removed
     plt.axis('off')
 
-    plt.show()
+    plt.savefig(
+        "plots/%s_plot_no_axis.svg" % country.lower().replace(
+            " ", "_"), transparent=True)
+
+    # plt.show()
     # Clear the plot for the next country
     ax.remove()
     break
